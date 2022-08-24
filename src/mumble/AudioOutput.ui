@@ -419,6 +419,19 @@
         </property>
        </widget>
       </item>
+      <item row="8" column="0" colspan="3">
+       <widget class="QCheckBox" name="qcbTalkButtonDeafensSelf">
+        <property name="toolTip">
+         <string>If checked, and you're not self-deafened already, Mumble sets the deafen-self option then unsets it when the talk button is used.</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;b&gt;'Walkie Talkie mode': When Talk button is used you will be fully deaf. This is useful for setups where echo and feedback are unable to be resolved.</string>
+        </property>
+        <property name="text">
+         <string>Deafen-Self when the talk button is used</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

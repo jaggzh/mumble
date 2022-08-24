@@ -1405,6 +1405,18 @@ Questo valore ti permette di impostare il numero massimo di utenti consentiti ne
         <translation>Attenua i moduli di loopback di PulseAudio</translation>
     </message>
     <message>
+        <source>&lt;b&gt;'Walkie Talkie mode': When Talk button is used you will be fully deaf. This is useful for setups where echo and feedback are unable to be resolved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deafen-Self when the talk button is used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>If checked, and you&apos;re not self-deafened already, Mumble sets the deafen-self option then unsets it when the talk button is used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Audio output</source>
         <translation>Output audio</translation>
     </message>
