@@ -260,6 +260,64 @@ bool AudioOutputSpeech::prepareSampleBuffer(unsigned int frameCount) {
 			int ts    = jitter_buffer_get_pointer_timestamp(jbJitter);
 			jitter_buffer_ctl(jbJitter, JITTER_BUFFER_GET_AVAILABLE_COUNT, &avail);
 
+			{
+				// Compute the jitter buffer "size" from the settings.
+				const int jitterBufferSize = Global::get().s.iJitterBufferSize * static_cast<int>(iFrameSize);
+
+				// Fixed thresholds.
+				const int THRESHOLD_VERY_HIGH = 150;
+				const int THRESHOLD_HIGH	  = 100;
+
+				// Determine submessage and log interval based on the current available count.
+				QString subMsg;
+				int logInterval;
+				if (avail > THRESHOLD_VERY_HIGH) {
+					subMsg = "VERY HIGH";
+					logInterval = 100;
+				} else if (avail > THRESHOLD_HIGH) {
+					subMsg = "HIGH";
+					logInterval = 100;
+				} else {
+					subMsg = "";
+					logInterval = 1000;
+				}
+
+				// Use a static variable to ensure we don't log too often.
+				static qint64 lastLogOutputTime = QDateTime::currentMSecsSinceEpoch();
+				qint64 now = QDateTime::currentMSecsSinceEpoch();
+				qint64 elapsed = now - lastLogOutputTime;
+				if (elapsed > logInterval) {
+					lastLogOutputTime = now;
+					qWarning() << "Jitter buffer" << subMsg << ": available packets =" << avail
+							   << ", jitter buffer size =" << jitterBufferSize;
+				}
+			}
+#define DROP_JITTERBUF_PEAK
+#define DROP_JITTERBUF_PERC_AGGRO 25   // Aggressive! At 4 packets in buffer it'll drop 1! Lowest latency
+#define DROP_JITTERBUF_PERC_MEDIUM 10 
+#define DROP_JITTERBUF_PERC DROP_JITTERBUF_PERC_AGGRO
+#ifdef DROP_JITTERBUF_PEAK
+			{
+				int dropCount = 0;
+				if (avail > 2) {
+					// Calculate the number of packets to drop: 10% of avail (at 11 packets, that's 1; at 200, then 20)
+					//dropCount = static_cast<int>( static_cast<float>(avail) * 0.10f );
+					dropCount = (avail*DROP_JITTERBUF_PERC) / 100;
+					/* if (dropCount < 1) dropCount = 1; */
+				}
+				if (dropCount > 0) {
+					qWarning() << "Dropping" << dropCount << "packets from jitter buffer to reduce lag.";
+					// Drop 'dropCount' packets by repeatedly calling jitter_buffer_get() and discarding the results.
+					JitterBufferPacket dummy;
+					for (int i = 0; i < dropCount; i++) {
+						if (jitter_buffer_get(jbJitter, &dummy, static_cast<int>(iFrameSize), nullptr) != JITTER_BUFFER_OK) {
+							break; // No more packets available to drop.
+						}
+					}
+				}
+			}
+#endif
+
 			if (p && (ts == 0)) {
 				int want = static_cast< int >(p->fAverageAvailable);
 				if (avail < want) {
